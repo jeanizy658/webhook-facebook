@@ -16,7 +16,6 @@ app.get('/webhook', (req, res) => {
   const challenge = req.query['hub.challenge'];
 
   if (mode && token === VERIFY_TOKEN) {
-    console.log('WEBHOOK VERIFIED');
     res.status(200).send(challenge);
   } else {
     res.sendStatus(403);
@@ -37,7 +36,27 @@ app.post('/webhook', async (req, res) => {
 
         console.log('Message reçu:', messageText);
 
-        await sendMessage(senderId, `Vous avez dit: ${messageText}`);
+        // Envoi du message vers Base44 AI
+        const aiResponse = await fetch(
+          'https://all-store-chat.base44.app/functions/chat',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: messageText,
+            }),
+          }
+        );
+
+        const aiData = await aiResponse.json();
+
+        const reply =
+          aiData.reply || 'Désolé, aucune réponse disponible.';
+
+        // Réponse Messenger
+        await sendMessage(senderId, reply);
       }
     }
 
